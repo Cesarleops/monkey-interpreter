@@ -22,6 +22,9 @@ func (l *Lexer) NextToken() token.Token {
 
 	var tok token.Token
 
+
+	l.skipWhitespace()
+
 	switch l.ch {
 	case '=' :
 
@@ -58,10 +61,59 @@ func (l *Lexer) NextToken() token.Token {
 
 		tok = *token.NewToken(token.COMMA, ",")
 
+	// If the current char is not one of the symbols, check if its a letter
+	default: 
+	 if isLetter(l.ch){
+		tok.Literal = l.readIdentifier()
+		tok.Type = token.LookupIdent(tok.Literal)
+		//Return here since we already advanced in the input when identifying the identifier
+		return tok
+	  } else if isDigit(l.ch) {
+		tok = *token.NewToken(token.INT, l.readNumber())
+		return  tok
+	  } else {
+		tok = *token.NewToken(token.ILLEGAL, string(l.ch))
+	  }
+
 	}
 
 	l.readChar()
 	return tok
+}
+
+
+func isLetter(char byte) bool {
+	return 'a' <= char && char <= 'z' || 'A' <= char && char <= 'Z' || char == '_'
+}
+
+func isDigit(ch byte) bool {
+return '0' <= ch && ch <= '9'
+}
+
+func (l *Lexer) readIdentifier() string {
+ position := l.position
+
+ for isLetter(l.ch) {
+	l.readChar()
+ }
+
+ return l.input[position: l.position]
+}
+
+
+func (l *Lexer) readNumber() string {
+	position:= l.position
+
+	for isDigit(l.ch){
+		l.readChar()
+	}
+
+	return l.input[position:l.position]
+}
+func (l *Lexer) skipWhitespace() {
+	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
+	l.readChar()
+}
 }
 
 
